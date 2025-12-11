@@ -1,0 +1,316 @@
+﻿python : Traceback 
+(most recent call 
+last):
+En línea: 1 
+Carácter: 1
++ python 
+capture_error.py 
+2>&1 | Out-File 
+-FilePath 
+error_log.txt -Enco 
+...
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (Traceba   
+ ck (most recent     
+call last)::Stri    
+ng) [], RemoteEx    
+ception
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+  File "C:\Users\LENO
+VO\Desktop\Condominio
+SamtIA\capture_error.
+py", line 8, in 
+<module>
+    execute_from_comm
+and_line(['manage.py'
+, 'check', 
+'--deploy'])
+    ~~~~~~~~~~~~~~~~~
+~~~~~~~~^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^
+  File "C:\Users\LENO
+VO\AppData\Local\Prog
+rams\Python\Python313
+\Lib\site-packages\dj
+ango\core\management\
+__init__.py", line 
+442, in execute_from_
+command_line
+    utility.execute()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\LENO
+VO\AppData\Local\Prog
+rams\Python\Python313
+\Lib\site-packages\dj
+ango\core\management\
+__init__.py", line 
+436, in execute
+    self.fetch_comman
+d(subcommand).run_fro
+m_argv(self.argv)
+    ~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~^^^^^^^^^^^
+  File "C:\Users\LENO
+VO\AppData\Local\Prog
+rams\Python\Python313
+\Lib\site-packages\dj
+ango\core\management\
+base.py", line 416, 
+in run_from_argv
+    
+self.execute(*args, 
+**cmd_options)
+    ~~~~~~~~~~~~^^^^^
+^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENO
+VO\AppData\Local\Prog
+rams\Python\Python313
+\Lib\site-packages\dj
+ango\core\management\
+base.py", line 460, 
+in execute
+    output = 
+self.handle(*args, 
+**options)
+  File "C:\Users\LENO
+VO\AppData\Local\Prog
+rams\Python\Python313
+\Lib\site-packages\dj
+ango\core\management\
+commands\check.py", 
+line 81, in handle
+    self.check(
+    ~~~~~~~~~~^
+        app_configs=a
+pp_configs,
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^
+    ...<4 lines>...
+        databases=opt
+ions["databases"],
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\LENO
+VO\AppData\Local\Prog
+rams\Python\Python313
+\Lib\site-packages\dj
+ango\core\management\
+base.py", line 492, 
+in check
+    all_issues = 
+checks.run_checks(
+        app_configs=a
+pp_configs,
+    ...<2 lines>...
+        
+databases=databases,
+    )
+  File "C:\Users\LENO
+VO\AppData\Local\Prog
+rams\Python\Python313
+\Lib\site-packages\dj
+ango\core\checks\regi
+stry.py", line 89, 
+in run_checks
+    new_errors = chec
+k(app_configs=app_con
+figs, 
+databases=databases)
+  File "C:\Users\LENO
+VO\AppData\Local\Prog
+rams\Python\Python313
+\Lib\site-packages\dj
+ango\core\checks\urls
+.py", line 136, in ch
+eck_custom_error_hand
+lers
+    handler = resolve
+r.resolve_error_handl
+er(status_code)
+  File "C:\Users\LENO
+VO\AppData\Local\Prog
+rams\Python\Python313
+\Lib\site-packages\dj
+ango\urls\resolvers.p
+y", line 732, in 
+resolve_error_handler
+    callback = getatt
+r(self.urlconf_module
+, "handler%s" % 
+view_type, None)
+                     
+  ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENO
+VO\AppData\Local\Prog
+rams\Python\Python313
+\Lib\site-packages\dj
+ango\utils\functional
+.py", line 47, in 
+__get__
+    res = instance.__
+dict__[self.name] = 
+self.func(instance)
+                     
+                    
+~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\LENO
+VO\AppData\Local\Prog
+rams\Python\Python313
+\Lib\site-packages\dj
+ango\urls\resolvers.p
+y", line 711, in 
+urlconf_module
+    return import_mod
+ule(self.urlconf_name
+)
+  File "C:\Users\LENO
+VO\AppData\Local\Prog
+rams\Python\Python313
+\Lib\importlib\__init
+__.py", line 88, in 
+import_module
+    return _bootstrap
+._gcd_import(name[lev
+el:], package, level)
+           ~~~~~~~~~~
+~~~~~~~~~~~~^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen impor
+tlib._bootstrap>", 
+line 1387, in 
+_gcd_import
+  File "<frozen impor
+tlib._bootstrap>", 
+line 1360, in 
+_find_and_load
+  File "<frozen impor
+tlib._bootstrap>", 
+line 1331, in _find_a
+nd_load_unlocked
+  File "<frozen impor
+tlib._bootstrap>", 
+line 935, in 
+_load_unlocked
+  File "<frozen impor
+tlib._bootstrap_exter
+nal>", line 1026, in 
+exec_module
+  File "<frozen impor
+tlib._bootstrap>", 
+line 488, in _call_wi
+th_frames_removed
+  File "C:\Users\LENO
+VO\Desktop\Condominio
+SamtIA\smartcondomini
+oia\urls.py", line 
+29, in <module>
+    path('api/communi
+cation/', include('co
+mmunication.urls')),
+                     
+          ~~~~~~~^^^^
+^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENO
+VO\AppData\Local\Prog
+rams\Python\Python313
+\Lib\site-packages\dj
+ango\urls\conf.py", 
+line 39, in include
+    urlconf_module = 
+import_module(urlconf
+_module)
+  File "C:\Users\LENO
+VO\AppData\Local\Prog
+rams\Python\Python313
+\Lib\importlib\__init
+__.py", line 88, in 
+import_module
+    return _bootstrap
+._gcd_import(name[lev
+el:], package, level)
+           ~~~~~~~~~~
+~~~~~~~~~~~~^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen impor
+tlib._bootstrap>", 
+line 1387, in 
+_gcd_import
+  File "<frozen impor
+tlib._bootstrap>", 
+line 1360, in 
+_find_and_load
+  File "<frozen impor
+tlib._bootstrap>", 
+line 1331, in _find_a
+nd_load_unlocked
+  File "<frozen impor
+tlib._bootstrap>", 
+line 935, in 
+_load_unlocked
+  File "<frozen impor
+tlib._bootstrap_exter
+nal>", line 1026, in 
+exec_module
+  File "<frozen impor
+tlib._bootstrap>", 
+line 488, in _call_wi
+th_frames_removed
+  File "C:\Users\LENO
+VO\Desktop\Condominio
+SamtIA\communication\
+urls.py", line 3, in 
+<module>
+    from .views 
+import 
+AnnouncementViewSet, 
+NotificationViewSet
+  File "C:\Users\LENO
+VO\Desktop\Condominio
+SamtIA\communication\
+views.py", line 9, 
+in <module>
+    from 
+.serializers import (
+    ...<2 lines>...
+    )
+  File "C:\Users\LENO
+VO\Desktop\Condominio
+SamtIA\communication\
+serializers.py", 
+line 62, in <module>
+    class BulkNotific
+ationSerializer(seria
+lizers.Serializer):
+    ...<11 lines>...
+        )
+  File "C:\Users\LENO
+VO\Desktop\Condominio
+SamtIA\communication\
+serializers.py", 
+line 65, in BulkNotif
+icationSerializer
+    message = seriali
+zers.TextField()
+              
+^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 
+module 'rest_framewor
+k.serializers' has 
+no attribute 
+'TextField'. Did you 
+mean: 'DictField'?
+
+================================================================================
+ERROR ENCONTRADO:
+================================================================================
+================================================================================

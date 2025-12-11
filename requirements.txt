@@ -1,0 +1,16 @@
+# Django
+Django>=5.0,<6.0
+psycopg2-binary==2.9.9
+python-decouple==3.8
+
+# Django REST Framework
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+
+# Image handling
+Pillow==10.2.0
+
+# Additional packages for future AI integration
+# boto3==1.34.34  # For AWS services
+# google-cloud-vision==3.7.0  # For Google Vision API
+# azure-cognitiveservices-vision-computervision==0.9.0  # For Azure Computer Vision
