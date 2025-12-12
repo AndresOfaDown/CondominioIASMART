@@ -10,6 +10,7 @@ from .serializers import (
     ReservationSerializer, ReservationCreateSerializer,
     AvailabilityCheckSerializer
 )
+from users.permissions import IsAdmin, IsAdminOrReadOnly, CanManageAreas
 
 
 class CommonAreaViewSet(viewsets.ModelViewSet):
@@ -25,7 +26,7 @@ class CommonAreaViewSet(viewsets.ModelViewSet):
     - POST /areas/{id}/check_availability/ - Verificar disponibilidad
     """
     queryset = CommonArea.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description']
     ordering_fields = ['name', 'cost_per_hour', 'capacity']
@@ -121,7 +122,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
     - GET /reservations/my_reservations/ - Obtener reservas del usuario
     """
     queryset = Reservation.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CanManageAreas]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['area__name', 'user__username']
     ordering_fields = ['start_time', 'created_at']

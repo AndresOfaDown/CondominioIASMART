@@ -1,5 +1,5 @@
 from django.db import models
-from users.models import User
+from users.models import Usuario
 
 
 class Announcement(models.Model):
@@ -16,7 +16,7 @@ class Announcement(models.Model):
     title = models.CharField(max_length=200)
     content = models.TextField()
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='GENERAL')
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='announcements')
+    author = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='announcements')
     image = models.ImageField(upload_to='announcements/', blank=True, null=True)
     is_published = models.BooleanField(default=False)
     published_date = models.DateTimeField(blank=True, null=True)
@@ -47,7 +47,7 @@ class Notification(models.Model):
         ('UNKNOWN_PERSON', 'Persona Desconocida'),
     )
     
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    user = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='notifications')
     title = models.CharField(max_length=200)
     message = models.TextField()
     notification_type = models.CharField(max_length=30, choices=NOTIFICATION_TYPE_CHOICES, default='INFO')

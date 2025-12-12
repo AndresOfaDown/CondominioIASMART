@@ -13,6 +13,7 @@ from .serializers import (
     SecurityIncidentSerializer, SecurityIncidentCreateSerializer,
     SecurityStatsSerializer
 )
+from users.permissions import IsAdminOrSecurity, IsAdminOrSecurityOrReadOnly, IsOwnerOrAdmin
 
 
 class CameraViewSet(viewsets.ModelViewSet):
@@ -27,7 +28,7 @@ class CameraViewSet(viewsets.ModelViewSet):
     """
     queryset = Camera.objects.all()
     serializer_class = CameraSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrSecurity]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'location']
     ordering_fields = ['name', 'camera_type', 'created_at']
@@ -54,7 +55,7 @@ class VehicleViewSet(viewsets.ModelViewSet):
     - POST /vehicles/{id}/unauthorize/ - Desautorizar vehículo
     """
     queryset = Vehicle.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrSecurityOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['plate_number', 'owner__username', 'brand', 'model']
     ordering_fields = ['plate_number', 'created_at']
@@ -112,7 +113,7 @@ class AccessLogViewSet(viewsets.ModelViewSet):
     - GET /access-logs/recent/ - Obtener accesos recientes
     """
     queryset = AccessLog.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrSecurity]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['plate_detected', 'visitor_name', 'user__username']
     ordering_fields = ['timestamp']
@@ -167,7 +168,7 @@ class SecurityIncidentViewSet(viewsets.ModelViewSet):
     - GET /incidents/stats/ - Obtener estadísticas de seguridad
     """
     queryset = SecurityIncident.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrSecurity]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['description', 'incident_type']
     ordering_fields = ['timestamp', 'severity']

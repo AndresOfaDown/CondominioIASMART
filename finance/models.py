@@ -1,6 +1,6 @@
 # finance/models.py
 from django.db import models
-from users.models import ResidentialUnit
+from users.models import UnidadResidencial
 from datetime import date
 
 
@@ -28,7 +28,7 @@ class Fee(models.Model):
         ('PAID', 'Pagado'),
         ('OVERDUE', 'Vencido'),  # Para la analítica de morosidad
     )
-    unit = models.ForeignKey(ResidentialUnit, on_delete=models.CASCADE, related_name='fees')
+    unit = models.ForeignKey(UnidadResidencial, on_delete=models.CASCADE, related_name='fees')
     title = models.CharField(max_length=100)  # Ej: Expensas Noviembre
     description = models.TextField(blank=True, null=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -71,7 +71,7 @@ class Payment(models.Model):
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='TRANSFER')
     receipt_image = models.ImageField(upload_to='receipts/', blank=True, null=True)  # Comprobante
     is_verified = models.BooleanField(default=False)
-    verified_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True)
+    verified_by = models.ForeignKey('users.Usuario', on_delete=models.SET_NULL, null=True, blank=True)
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Vehicle, AccessLog, SecurityIncident, Camera
-from users.serializers import UserSerializer
+from users.serializers import UsuarioSerializer
 
 
 class CameraSerializer(serializers.ModelSerializer):

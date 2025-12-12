@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Announcement, Notification
-from users.models import User
+from users.models import Usuario
 
 
 class AnnouncementSerializer(serializers.ModelSerializer):
@@ -65,7 +65,7 @@ class BulkNotificationSerializer(serializers.Serializer):
     message = serializers.CharField()
     notification_type = serializers.ChoiceField(choices=Notification.NOTIFICATION_TYPE_CHOICES)
     target_role = serializers.ChoiceField(
-        choices=[('ALL', 'Todos')] + list(User.ROLE_CHOICES),
+        choices=[('ALL', 'Todos')] + list(Usuario.ROLES),
         required=False
     )
     user_ids = serializers.ListField(

@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import Fee, Payment, FeeConfiguration
-from users.serializers import ResidentialUnitSerializer
 
 
 class FeeConfigurationSerializer(serializers.ModelSerializer):

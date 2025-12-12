@@ -1,6 +1,6 @@
 # security/models.py
 from django.db import models
-from users.models import User, ResidentialUnit
+from users.models import Usuario, UnidadResidencial
 
 
 class Camera(models.Model):
@@ -35,8 +35,8 @@ class Camera(models.Model):
 class Vehicle(models.Model):
     """Para Reconocimiento de Vehículos (OCR)"""
     plate_number = models.CharField(max_length=20, unique=True)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='vehicles')
-    unit = models.ForeignKey(ResidentialUnit, on_delete=models.SET_NULL, null=True, blank=True)
+    owner = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='vehicles')
+    unit = models.ForeignKey(UnidadResidencial, on_delete=models.SET_NULL, null=True, blank=True)
     brand = models.CharField(max_length=50, blank=True, null=True)
     model = models.CharField(max_length=50, blank=True, null=True)
     color = models.CharField(max_length=30, blank=True, null=True)
@@ -69,7 +69,7 @@ class AccessLog(models.Model):
     access_type = models.CharField(max_length=10, choices=ACCESS_TYPES)
     detection_method = models.CharField(max_length=20, choices=DETECTION_METHOD_CHOICES, default='MANUAL')
     is_resident = models.BooleanField(default=False)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='access_logs')
+    user = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name='access_logs')
     vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, null=True, blank=True)
     visitor_name = models.CharField(max_length=100, blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
@@ -109,7 +109,7 @@ class SecurityIncident(models.Model):
     evidence_image = models.ImageField(upload_to='incidents/')
     severity = models.CharField(max_length=20, choices=SEVERITY_CHOICES, default='MEDIUM')
     resolved = models.BooleanField(default=False)
-    resolved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='resolved_incidents')
+    resolved_by = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name='resolved_incidents')
     resolved_at = models.DateTimeField(blank=True, null=True)
     resolution_notes = models.TextField(blank=True, null=True)
     

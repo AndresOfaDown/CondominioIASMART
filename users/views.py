@@ -6,10 +6,16 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django.db.models import Q
-from .models import User, ResidentialUnit
+from django.utils import timezone
+from .models import Usuario, UnidadResidencial, Residente
 from .serializers import (
-    UserSerializer, UserCreateSerializer, UserUpdateSerializer,
-    ResidentialUnitSerializer, ResidentialUnitCreateSerializer
+    UsuarioSerializer, UsuarioCrearSerializer, UsuarioActualizarSerializer,
+    UnidadResidencialSerializer, UnidadResidencialCrearSerializer, UnidadResidencialActualizarSerializer,
+    ResidenteSerializer, ResidenteCrearSerializer, ResidenteActualizarSerializer
+)
+from .permissions import (
+    IsAdmin, IsAdminOrReadOnly, IsSelfOrAdmin, IsOwnerOrAdmin,
+    ROLE_PERMISSIONS, get_permissions_for_role
 )
 
 
@@ -33,8 +39,8 @@ class LoginView(APIView):
         
         # Buscar usuario por email
         try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
+            user = Usuario.objects.get(email=email)
+        except Usuario.DoesNotExist:
             return Response(
                 {"error": "Credenciales inválidas"},
                 status=status.HTTP_401_UNAUTHORIZED
@@ -59,13 +65,13 @@ class LoginView(APIView):
         return Response({
             "refresh": str(refresh),
             "access": str(refresh.access_token),
-            "user": {
+            "usuario": {
                 "id": user.id,
                 "username": user.username,
                 "email": user.email,
-                "role": user.role,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
+                "rol": user.rol,
+                "nombre": user.first_name,
+                "apellido": user.last_name,
             }
         }, status=status.HTTP_200_OK)
 
@@ -91,7 +97,7 @@ class LogoutView(APIView):
             token.blacklist()
             
             return Response(
-                {"message": "Logout exitoso"},
+                {"mensaje": "Logout exitoso"},
                 status=status.HTTP_200_OK
             )
         except Exception as e:
@@ -101,52 +107,62 @@ class LogoutView(APIView):
             )
 
 
-
-class UserViewSet(viewsets.ModelViewSet):
+class UsuarioViewSet(viewsets.ModelViewSet):
     """
     ViewSet para gestión completa de usuarios
     Endpoints:
-    - GET /users/ - Listar todos los usuarios
-    - POST /users/ - Crear nuevo usuario
-    - GET /users/{id}/ - Obtener detalle de usuario
-    - PUT /users/{id}/ - Actualizar usuario
-    - DELETE /users/{id}/ - Eliminar usuario
-    - GET /users/me/ - Obtener usuario actual
-    - GET /users/by_role/ - Filtrar usuarios por rol
+    - GET /usuarios/ - Listar todos los usuarios
+    - POST /usuarios/ - Crear nuevo usuario
+    - GET /usuarios/{id}/ - Obtener detalle de usuario
+    - PUT /usuarios/{id}/ - Actualizar usuario
+    - DELETE /usuarios/{id}/ - Eliminar usuario
+    - GET /usuarios/me/ - Obtener usuario actual
+    - GET /usuarios/por_rol/ - Filtrar usuarios por rol
     """
-    queryset = User.objects.all()
+    queryset = Usuario.objects.all()
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['username', 'email', 'first_name', 'last_name']
-    ordering_fields = ['username', 'created_at']
+    ordering_fields = ['username', 'fecha_creacion']
     
     def get_serializer_class(self):
         if self.action == 'create':
-            return UserCreateSerializer
+            return UsuarioCrearSerializer
         elif self.action in ['update', 'partial_update']:
-            return UserUpdateSerializer
-        return UserSerializer
+            return UsuarioActualizarSerializer
+        return UsuarioSerializer
     
     def get_permissions(self):
         if self.action == 'create':
-            return [AllowAny()]
+            return [IsAdmin()]
+        elif self.action in ['update', 'partial_update', 'destroy']:
+            return [IsSelfOrAdmin()]
+        elif self.action in ['me', 'roles', 'permisos', 'mis_permisos']:
+            return [IsAuthenticated()]
+        elif self.action in ['list', 'por_rol', 'cambiar_rol']:
+            return [IsAdmin()]
         return [IsAuthenticated()]
+    
+    def get_queryset(self):
+        if self.request.user.rol == 'ADMIN':
+            return Usuario.objects.all()
+        return Usuario.objects.filter(id=self.request.user.id)
     
     @action(detail=False, methods=['get'])
     def me(self, request):
         """Obtener información del usuario actual"""
-        serializer = UserSerializer(request.user)
+        serializer = UsuarioSerializer(request.user)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
-    def by_role(self, request):
-        """Filtrar usuarios por rol"""
-        role = request.query_params.get('role', None)
-        if role:
-            users = User.objects.filter(role=role)
-            serializer = UserSerializer(users, many=True)
+    def por_rol(self, request):
+        """Filtrar usuarios por rol (solo ADMIN)"""
+        rol = request.query_params.get('rol', None)
+        if rol:
+            usuarios = Usuario.objects.filter(rol=rol)
+            serializer = UsuarioSerializer(usuarios, many=True)
             return Response(serializer.data)
         return Response(
-            {"error": "El parámetro 'role' es requerido"},
+            {"error": "El parámetro 'rol' es requerido"},
             status=status.HTTP_400_BAD_REQUEST
         )
     
@@ -154,20 +170,66 @@ class UserViewSet(viewsets.ModelViewSet):
     def roles(self, request):
         """Listar todos los roles disponibles"""
         roles = [
-            {"code": code, "name": name} 
-            for code, name in User.ROLE_CHOICES
+            {"codigo": codigo, "nombre": nombre} 
+            for codigo, nombre in Usuario.ROLES
         ]
         return Response(roles)
     
+    @action(detail=False, methods=['get'])
+    def permisos(self, request):
+        """Obtener todos los permisos por rol (solo ADMIN)"""
+        return Response(ROLE_PERMISSIONS)
+    
+    @action(detail=False, methods=['get'])
+    def mis_permisos(self, request):
+        """Obtener los permisos del usuario actual según su rol"""
+        permisos_usuario = get_permissions_for_role(request.user.rol)
+        return Response({
+            "rol": request.user.rol,
+            "rol_nombre": request.user.get_rol_display(),
+            "permisos": permisos_usuario
+        })
+    
     @action(detail=True, methods=['post'])
-    def upload_photo(self, request, pk=None):
-        """Endpoint para subir foto del usuario (para reconocimiento facial)"""
-        user = self.get_object()
-        if 'photo' in request.FILES:
-            user.photo = request.FILES['photo']
-            user.save()
+    def cambiar_rol(self, request, pk=None):
+        """Cambiar el rol de un usuario (solo ADMIN)"""
+        usuario = self.get_object()
+        nuevo_rol = request.data.get('rol')
+        
+        if not nuevo_rol:
             return Response(
-                {"message": "Foto actualizada correctamente"},
+                {"error": "Se requiere el campo 'rol'"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        roles_validos = [codigo for codigo, nombre in Usuario.ROLES]
+        if nuevo_rol not in roles_validos:
+            return Response(
+                {"error": f"Rol inválido. Roles válidos: {roles_validos}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        rol_anterior = usuario.rol
+        usuario.rol = nuevo_rol
+        usuario.save()
+        
+        return Response({
+            "mensaje": "Rol cambiado exitosamente",
+            "usuario_id": usuario.id,
+            "username": usuario.username,
+            "rol_anterior": rol_anterior,
+            "rol_nuevo": nuevo_rol
+        }, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['post'])
+    def subir_foto(self, request, pk=None):
+        """Endpoint para subir foto del usuario (para reconocimiento facial)"""
+        usuario = self.get_object()
+        if 'foto' in request.FILES:
+            usuario.foto = request.FILES['foto']
+            usuario.save()
+            return Response(
+                {"mensaje": "Foto actualizada correctamente"},
                 status=status.HTTP_200_OK
             )
         return Response(
@@ -176,72 +238,271 @@ class UserViewSet(viewsets.ModelViewSet):
         )
 
 
-class ResidentialUnitViewSet(viewsets.ModelViewSet):
+class UnidadResidencialViewSet(viewsets.ModelViewSet):
     """
     ViewSet para gestión de unidades residenciales
     Endpoints:
-    - GET /units/ - Listar todas las unidades
-    - POST /units/ - Crear nueva unidad
-    - GET /units/{id}/ - Obtener detalle de unidad
-    - PUT /units/{id}/ - Actualizar unidad
-    - DELETE /units/{id}/ - Eliminar unidad
-    - POST /units/{id}/add_resident/ - Añadir residente a unidad
-    - POST /units/{id}/remove_resident/ - Remover residente de unidad
+    - GET /unidades/ - Listar todas las unidades
+    - POST /unidades/ - Crear nueva unidad
+    - GET /unidades/{id}/ - Obtener detalle de unidad
+    - PUT /unidades/{id}/ - Actualizar unidad
+    - DELETE /unidades/{id}/ - Eliminar unidad
+    - POST /unidades/{id}/alquilar/ - Alquilar unidad a inquilino
+    - POST /unidades/{id}/terminar_alquiler/ - Terminar alquiler
+    - GET /unidades/{id}/residentes/ - Ver residentes de la unidad
     """
-    queryset = ResidentialUnit.objects.all()
-    permission_classes = [IsAuthenticated]
+    queryset = UnidadResidencial.objects.all()
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['unit_number', 'owner__username']
-    ordering_fields = ['unit_number', 'created_at']
+    search_fields = ['numero_unidad', 'propietario__username', 'propietario__email']
+    ordering_fields = ['numero_unidad', 'fecha_creacion', 'estado_ocupacion']
     
     def get_serializer_class(self):
         if self.action == 'create':
-            return ResidentialUnitCreateSerializer
-        return ResidentialUnitSerializer
+            return UnidadResidencialCrearSerializer
+        elif self.action in ['update', 'partial_update']:
+            return UnidadResidencialActualizarSerializer
+        return UnidadResidencialSerializer
+    
+    @action(detail=True, methods=['get'])
+    def residentes(self, request, pk=None):
+        """Obtener residentes activos de la unidad"""
+        unidad = self.get_object()
+        residentes = unidad.residentes.filter(activo=True)
+        serializer = ResidenteSerializer(residentes, many=True)
+        return Response(serializer.data)
     
     @action(detail=True, methods=['post'])
-    def add_resident(self, request, pk=None):
-        """Añadir un residente a la unidad"""
-        unit = self.get_object()
-        user_id = request.data.get('user_id')
+    def registrar_propietario_residente(self, request, pk=None):
+        """Registrar al propietario como residente de su propia unidad"""
+        unidad = self.get_object()
+        fecha_ingreso = request.data.get('fecha_ingreso', timezone.now().date())
         
-        try:
-            user = User.objects.get(id=user_id)
-            unit.residents.add(user)
+        # Verificar si el propietario ya está registrado como residente activo
+        existente = Residente.objects.filter(
+            usuario=unidad.propietario, unidad=unidad, activo=True
+        ).exists()
+        
+        if existente:
             return Response(
-                {"message": f"Residente {user.username} añadido correctamente"},
-                status=status.HTTP_200_OK
+                {"error": "El propietario ya está registrado como residente activo"},
+                status=status.HTTP_400_BAD_REQUEST
             )
-        except User.DoesNotExist:
-            return Response(
-                {"error": "Usuario no encontrado"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+        
+        # Crear registro de residente
+        residente = Residente.objects.create(
+            usuario=unidad.propietario,
+            unidad=unidad,
+            tipo_residente='PROPIETARIO_RESIDENTE',
+            es_principal=True,
+            fecha_ingreso=fecha_ingreso
+        )
+        
+        # Actualizar estado de ocupación
+        unidad.estado_ocupacion = 'OCUPADA_PROPIETARIO'
+        unidad.save()
+        
+        serializer = ResidenteSerializer(residente)
+        return Response({
+            "mensaje": "Propietario registrado como residente",
+            "residente": serializer.data
+        }, status=status.HTTP_201_CREATED)
     
     @action(detail=True, methods=['post'])
-    def remove_resident(self, request, pk=None):
-        """Remover un residente de la unidad"""
-        unit = self.get_object()
-        user_id = request.data.get('user_id')
+    def alquilar(self, request, pk=None):
+        """
+        Alquilar unidad a un inquilino
+        Body: {
+            "inquilino_id": 5,
+            "fecha_ingreso": "2024-01-15",
+            "notas": "Contrato por 12 meses" (opcional)
+        }
+        """
+        unidad = self.get_object()
+        inquilino_id = request.data.get('inquilino_id')
+        fecha_ingreso = request.data.get('fecha_ingreso', timezone.now().date())
+        notas = request.data.get('notas', '')
+        
+        if not inquilino_id:
+            return Response(
+                {"error": "Se requiere inquilino_id"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Verificar que la unidad no esté alquilada
+        if unidad.estado_ocupacion == 'ALQUILADA':
+            return Response(
+                {"error": "La unidad ya está alquilada. Termine el alquiler actual primero."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         try:
-            user = User.objects.get(id=user_id)
-            unit.residents.remove(user)
+            inquilino = Usuario.objects.get(id=inquilino_id)
+        except Usuario.DoesNotExist:
             return Response(
-                {"message": f"Residente {user.username} removido correctamente"},
-                status=status.HTTP_200_OK
-            )
-        except User.DoesNotExist:
-            return Response(
-                {"error": "Usuario no encontrado"},
+                {"error": "Usuario inquilino no encontrado"},
                 status=status.HTTP_404_NOT_FOUND
             )
+        
+        # Desactivar residentes anteriores si los hay
+        Residente.objects.filter(unidad=unidad, activo=True).update(
+            activo=False,
+            fecha_salida=timezone.now().date()
+        )
+        
+        # Crear registro del inquilino
+        residente = Residente.objects.create(
+            usuario=inquilino,
+            unidad=unidad,
+            tipo_residente='INQUILINO',
+            es_principal=True,
+            fecha_ingreso=fecha_ingreso,
+            notas=notas
+        )
+        
+        # Actualizar estado de ocupación
+        unidad.estado_ocupacion = 'ALQUILADA'
+        unidad.save()
+        
+        serializer = ResidenteSerializer(residente)
+        return Response({
+            "mensaje": f"Unidad {unidad.numero_unidad} alquilada a {inquilino.get_full_name()}",
+            "residente": serializer.data
+        }, status=status.HTTP_201_CREATED)
+    
+    @action(detail=True, methods=['post'])
+    def terminar_alquiler(self, request, pk=None):
+        """Terminar alquiler de la unidad"""
+        unidad = self.get_object()
+        fecha_salida = request.data.get('fecha_salida', timezone.now().date())
+        
+        if unidad.estado_ocupacion != 'ALQUILADA':
+            return Response(
+                {"error": "La unidad no está alquilada"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Desactivar todos los residentes activos
+        residentes = Residente.objects.filter(unidad=unidad, activo=True)
+        cantidad = residentes.count()
+        residentes.update(activo=False, fecha_salida=fecha_salida)
+        
+        # Cambiar estado a vacante
+        unidad.estado_ocupacion = 'VACANTE'
+        unidad.save()
+        
+        return Response({
+            "mensaje": f"Alquiler terminado. {cantidad} residente(s) desactivado(s).",
+            "estado_unidad": "VACANTE"
+        }, status=status.HTTP_200_OK)
     
     @action(detail=False, methods=['get'])
-    def my_units(self, request):
-        """Obtener las unidades del usuario actual"""
-        units = ResidentialUnit.objects.filter(
-            Q(owner=request.user) | Q(residents=request.user)
-        ).distinct()
-        serializer = ResidentialUnitSerializer(units, many=True)
+    def mis_unidades(self, request):
+        """Obtener las unidades del usuario actual (como propietario o residente)"""
+        # Unidades que posee
+        propias = UnidadResidencial.objects.filter(propietario=request.user)
+        
+        # Unidades donde es residente activo
+        ids_residencia = Residente.objects.filter(
+            usuario=request.user, activo=True
+        ).values_list('unidad_id', flat=True)
+        residiendo = UnidadResidencial.objects.filter(id__in=ids_residencia)
+        
+        # Combinar sin duplicados
+        unidades = (propias | residiendo).distinct()
+        serializer = UnidadResidencialSerializer(unidades, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def por_estado(self, request):
+        """Filtrar unidades por estado de ocupación"""
+        estado = request.query_params.get('estado')
+        if estado:
+            unidades = UnidadResidencial.objects.filter(estado_ocupacion=estado)
+            serializer = UnidadResidencialSerializer(unidades, many=True)
+            return Response(serializer.data)
+        return Response(
+            {"error": "El parámetro 'estado' es requerido (OCUPADA_PROPIETARIO, ALQUILADA, VACANTE)"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class ResidenteViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gestión de residentes
+    Endpoints:
+    - GET /residentes/ - Listar todos los residentes
+    - POST /residentes/ - Registrar nuevo residente
+    - GET /residentes/{id}/ - Obtener detalle de residente
+    - PUT /residentes/{id}/ - Actualizar residente
+    - DELETE /residentes/{id}/ - Desactivar residente
+    - POST /residentes/{id}/terminar_residencia/ - Terminar residencia
+    - GET /residentes/activos/ - Solo residentes activos
+    - GET /residentes/por_tipo/ - Filtrar por tipo
+    """
+    queryset = Residente.objects.all()
+    permission_classes = [IsAdminOrReadOnly]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['usuario__username', 'usuario__email', 'usuario__first_name', 'unidad__numero_unidad']
+    ordering_fields = ['fecha_creacion', 'fecha_ingreso', 'es_principal']
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return ResidenteCrearSerializer
+        elif self.action in ['update', 'partial_update']:
+            return ResidenteActualizarSerializer
+        return ResidenteSerializer
+    
+    @action(detail=False, methods=['get'])
+    def activos(self, request):
+        """Obtener solo residentes activos"""
+        residentes = Residente.objects.filter(activo=True)
+        serializer = ResidenteSerializer(residentes, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def por_tipo(self, request):
+        """Filtrar residentes por tipo"""
+        tipo = request.query_params.get('tipo')
+        if tipo:
+            residentes = Residente.objects.filter(tipo_residente=tipo, activo=True)
+            serializer = ResidenteSerializer(residentes, many=True)
+            return Response(serializer.data)
+        return Response(
+            {"error": "El parámetro 'tipo' es requerido (PROPIETARIO_RESIDENTE, INQUILINO, FAMILIAR, AUTORIZADO)"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    @action(detail=True, methods=['post'])
+    def terminar_residencia(self, request, pk=None):
+        """Terminar la residencia de un usuario"""
+        residente = self.get_object()
+        fecha_salida = request.data.get('fecha_salida', timezone.now().date())
+        
+        if not residente.activo:
+            return Response(
+                {"error": "Esta residencia ya está inactiva"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        residente.terminar_residencia(fecha_salida)
+        
+        # Si era el principal y es INQUILINO, actualizar estado de la unidad
+        if residente.es_principal and residente.tipo_residente == 'INQUILINO':
+            unidad = residente.unidad
+            # Verificar si hay otros residentes activos
+            if not Residente.objects.filter(unidad=unidad, activo=True).exists():
+                unidad.estado_ocupacion = 'VACANTE'
+                unidad.save()
+        
+        return Response({
+            "mensaje": f"Residencia de {residente.usuario.get_full_name()} terminada",
+            "fecha_salida": str(fecha_salida)
+        }, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['get'])
+    def mis_residencias(self, request):
+        """Obtener residencias del usuario actual"""
+        residencias = Residente.objects.filter(usuario=request.user)
+        serializer = ResidenteSerializer(residencias, many=True)
         return Response(serializer.data)

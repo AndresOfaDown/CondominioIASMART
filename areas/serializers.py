@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import CommonArea, Reservation
-from users.serializers import UserSerializer
+from users.serializers import UsuarioSerializer
 
 
 class CommonAreaSerializer(serializers.ModelSerializer):

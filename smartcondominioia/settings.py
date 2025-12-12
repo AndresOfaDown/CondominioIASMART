@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'security',
     'finance',
 ]
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = 'users.Usuario'
 
 
 MIDDLEWARE = [

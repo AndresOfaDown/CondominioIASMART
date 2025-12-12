@@ -10,6 +10,7 @@ from .serializers import (
     PaymentSerializer, PaymentCreateSerializer,
     FeeConfigurationSerializer, FinancialReportSerializer
 )
+from users.permissions import IsAdmin, CanManageFinances
 
 
 class FeeConfigurationViewSet(viewsets.ModelViewSet):
@@ -18,7 +19,7 @@ class FeeConfigurationViewSet(viewsets.ModelViewSet):
     Solo accesible por administradores
     """
     queryset = FeeConfiguration.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdmin]
     serializer_class = FeeConfigurationSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description']
@@ -39,7 +40,7 @@ class FeeViewSet(viewsets.ModelViewSet):
     - POST /fees/{id}/mark_paid/ - Marcar cuota como pagada
     """
     queryset = Fee.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CanManageFinances]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'unit__unit_number']
     ordering_fields = ['due_date', 'amount', 'created_at']
@@ -105,7 +106,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
     - GET /payments/my_payments/ - Obtener pagos del usuario
     """
     queryset = Payment.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CanManageFinances]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['fee__title', 'fee__unit__unit_number']
     ordering_fields = ['payment_date', 'amount_paid']

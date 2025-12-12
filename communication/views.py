@@ -5,11 +5,12 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from django.db.models import Q
 from .models import Announcement, Notification
-from users.models import User
+from users.models import Usuario
 from .serializers import (
     AnnouncementSerializer, AnnouncementCreateSerializer, AnnouncementPublishSerializer,
     NotificationSerializer, NotificationCreateSerializer, BulkNotificationSerializer
 )
+from users.permissions import IsAdmin, CanCreateAnnouncements
 
 
 class AnnouncementViewSet(viewsets.ModelViewSet):
@@ -26,7 +27,7 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
     - POST /announcements/{id}/unpublish/ - Despublicar aviso
     """
     queryset = Announcement.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CanCreateAnnouncements]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'content', 'category']
     ordering_fields = ['created_at', 'published_date', 'is_pinned']
@@ -63,7 +64,7 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
         announcement.save()
         
         # Crear notificaciones para todos los usuarios
-        users = User.objects.filter(is_active=True)
+        users = Usuario.objects.filter(is_active=True)
         notifications = [
             Notification(
                 user=user,
@@ -196,11 +197,11 @@ class NotificationViewSet(viewsets.ModelViewSet):
         
         # Determinar destinatarios
         if 'user_ids' in data and data['user_ids']:
-            users = User.objects.filter(id__in=data['user_ids'])
+            users = Usuario.objects.filter(id__in=data['user_ids'])
         elif 'target_role' in data and data['target_role'] != 'ALL':
-            users = User.objects.filter(role=data['target_role'])
+            users = Usuario.objects.filter(role=data['target_role'])
         else:
-            users = User.objects.filter(is_active=True)
+            users = Usuario.objects.filter(is_active=True)
         
         # Crear notificaciones
         notifications = [

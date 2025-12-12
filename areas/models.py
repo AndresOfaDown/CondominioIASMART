@@ -1,7 +1,7 @@
 # areas/models.py
 from django.db import models
 from django.core.exceptions import ValidationError
-from users.models import User
+from users.models import Usuario
 
 
 class CommonArea(models.Model):
@@ -36,7 +36,7 @@ class Reservation(models.Model):
     )
     
     area = models.ForeignKey(CommonArea, on_delete=models.CASCADE, related_name='reservations')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reservations')
+    user = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='reservations')
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')

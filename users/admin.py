@@ -1,26 +1,33 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, ResidentialUnit
+from .models import Usuario, UnidadResidencial, Residente
 
 
-@admin.register(User)
-class UserAdmin(BaseUserAdmin):
-    list_display = ['username', 'email', 'first_name', 'last_name', 'role', 'is_active']
-    list_filter = ['role', 'is_active', 'email_verified']
+@admin.register(Usuario)
+class UsuarioAdmin(BaseUserAdmin):
+    list_display = ['username', 'email', 'first_name', 'last_name', 'rol', 'is_active']
+    list_filter = ['rol', 'is_active', 'email_verificado']
     search_fields = ['username', 'email', 'first_name', 'last_name']
     
     fieldsets = BaseUserAdmin.fieldsets + (
         ('Información Adicional', {
-            'fields': ('role', 'phone', 'photo', 'email_verified', 'facial_encoding')
+            'fields': ('rol', 'telefono', 'foto', 'email_verificado', 'encoding_facial')
         }),
     )
 
 
-@admin.register(ResidentialUnit)
-class ResidentialUnitAdmin(admin.ModelAdmin):
-    list_display = ['unit_number', 'owner', 'floor', 'bedrooms', 'is_active']
-    list_filter = ['is_active', 'floor']
-    search_fields = ['unit_number', 'owner__username']
-    filter_horizontal = ['residents']
+@admin.register(UnidadResidencial)
+class UnidadResidencialAdmin(admin.ModelAdmin):
+    list_display = ['numero_unidad', 'propietario', 'estado_ocupacion', 'piso', 'dormitorios', 'activo']
+    list_filter = ['estado_ocupacion', 'activo', 'piso']
+    search_fields = ['numero_unidad', 'propietario__username', 'propietario__email']
+    readonly_fields = ['fecha_creacion', 'fecha_actualizacion']
 
-##admin.site.register(User)
+
+@admin.register(Residente)
+class ResidenteAdmin(admin.ModelAdmin):
+    list_display = ['usuario', 'unidad', 'tipo_residente', 'es_principal', 'activo', 'fecha_ingreso']
+    list_filter = ['tipo_residente', 'es_principal', 'activo']
+    search_fields = ['usuario__username', 'usuario__email', 'unidad__numero_unidad']
+    readonly_fields = ['fecha_creacion', 'fecha_actualizacion']
+    date_hierarchy = 'fecha_ingreso'
