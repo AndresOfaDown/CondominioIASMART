@@ -143,9 +143,8 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
     
     def get_queryset(self):
-        if self.request.user.rol == 'ADMIN':
-            return Usuario.objects.all()
-        return Usuario.objects.filter(id=self.request.user.id)
+        # Los permisos ya controlan el acceso, no necesitamos filtrar aquí
+        return Usuario.objects.all()
     
     @action(detail=False, methods=['get'])
     def me(self, request):
@@ -174,6 +173,13 @@ class UsuarioViewSet(viewsets.ModelViewSet):
             for codigo, nombre in Usuario.ROLES
         ]
         return Response(roles)
+    
+    @action(detail=False, methods=['get'])
+    def todos(self, request):
+        """Listar TODOS los usuarios sin paginación (solo ADMIN)"""
+        usuarios = Usuario.objects.all()
+        serializer = UsuarioSerializer(usuarios, many=True)
+        return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def permisos(self, request):

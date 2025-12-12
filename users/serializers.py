@@ -36,8 +36,25 @@ class UsuarioCrearSerializer(serializers.ModelSerializer):
         return attrs
     
     def create(self, validated_data):
+        # Remover password2
         validated_data.pop('password2')
+        
+        # Extraer campos personalizados que create_user no acepta
+        rol = validated_data.pop('rol', 'RESIDENTE')
+        telefono = validated_data.pop('telefono', None)
+        foto = validated_data.pop('foto', None)
+        
+        # Crear usuario solo con campos estándar de Django
         user = Usuario.objects.create_user(**validated_data)
+        
+        # Asignar campos personalizados
+        user.rol = rol
+        if telefono:
+            user.telefono = telefono
+        if foto:
+            user.foto = foto
+        user.save()
+        
         return user
 
 
