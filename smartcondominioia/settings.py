@@ -129,8 +129,10 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # React frontend
+    "http://localhost:5173",  # Vite frontend
     "http://localhost:8080",  # Posible otro frontend
     "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
 ]
 
 # REST Framework Configuration
@@ -144,7 +146,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
+    'PAGE_SIZE': 100,  # Aumentado de 10 a 100 para mostrar más usuarios
     'DEFAULT_FILTER_BACKENDS': [
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
