@@ -9,7 +9,8 @@ djangorestframework-simplejwt==5.3.1
 django-cors-headers==4.3.1
 
 # Image handling
-Pillow==10.2.0
+# Use >= to allow newer compatible versions and avoid build errors with newer Python
+Pillow>=10.2.0
 
 # Additional packages for future AI integration
 # boto3==1.34.34  # For AWS services
